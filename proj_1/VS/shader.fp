@@ -5,6 +5,7 @@ in vec4 vVaryingColor;
 out vec4 vFragColor;
 
 
-void main() {
+void main()
+{
 	vFragColor =vVaryingColor;
 }
