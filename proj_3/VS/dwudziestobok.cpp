@@ -60,7 +60,7 @@ void LookAt(GLFrame &frame, const M3DVector3f eye, const M3DVector3f at, const M
     SetUpFrame(frame, eye, forward, up);
 }
 
-float kz = 5;
+float kz = 2;
 
 void KeyboardKeys(unsigned char key, int xmouse, int ymouse)//unsigned char key, int xmouse, int ymouse)
 {
@@ -129,17 +129,21 @@ void drawSmoothTriangles(int n_faces, float *vertices, int *faces) {
 }
 
 //----------------------------------------------------
-void drawGrid() {
-	glBegin(GL_LINES);
-	for(float i=-10.0; i<=10.0; i++)
-	{
-		glVertexAttrib3f(GLT_ATTRIBUTE_COLOR, 1.0f, 1.0f, 1.0f);
-		glVertex3f(-10.0f, i, 0.0f);
-		glVertex3f( 10.0f, i, 0.0f);
+void drawGrid()
+{
+    glBegin(GL_LINES);
+
+    glVertexAttrib3f(GLT_ATTRIBUTE_COLOR, 0.0f, 0.0f, 0.0f);
+
+    for(int i=-10;i<11;i++)
+        for(int j=-10; j<11;j++)
+		{
+            glVertex3f(i, j, 0.0f);
+            glVertex3f(-i, j, 0.0f);
+            glVertex3f(i, -j, 0.0f);
+            glVertex3f(i, j, 0.0f);
+        }
 		
-		glVertex3f(i, -10.0f, 0.0f);
-		glVertex3f(i,  10.0f, 0.0f);
-	}
     glEnd();
 }
 
@@ -261,7 +265,7 @@ void RenderScene(void) {
 	glUniformMatrix3fv(normalMatrixLocation,1,GL_FALSE,geometryPipeline.GetNormalMatrix());
 	glUniform3fv(shaderPositionLocation, 1, position);
 	glUniform3fv(shaderColorLocation, 1, color);
-	glUniform1f(shaderAngleLocation, angle);
+	glUniform1f(shaderAngleLocation, l_angle);
 	glUniform1f(shaderAttenuation0Location, attenuation0);
 	glUniform1f(shaderAttenuation1Location, attenuation1);
 	glUniform1f(shaderAttenuation2Location, attenuation2);
@@ -280,7 +284,7 @@ void RenderScene(void) {
 	glUniformMatrix3fv(normalMatrixLocation,1,GL_FALSE,geometryPipeline.GetNormalMatrix());
 	glUniform3fv(shaderPositionLocation, 1, position);
 	glUniform3fv(shaderColorLocation, 1, color);
-	glUniform1f(shaderAngleLocation, angle);
+	glUniform1f(shaderAngleLocation, l_angle);
 	glUniform1f(shaderAttenuation0Location, attenuation0);
 	glUniform1f(shaderAttenuation1Location, attenuation1);
 	glUniform1f(shaderAttenuation2Location, attenuation2);
@@ -297,7 +301,7 @@ void RenderScene(void) {
 	glUniformMatrix3fv(normalMatrixLocation,1,GL_FALSE,geometryPipeline.GetNormalMatrix());
 	glUniform3fv(shaderPositionLocation, 1, position);
 	glUniform3fv(shaderColorLocation, 1, color);
-	glUniform1f(shaderAngleLocation, angle);
+	glUniform1f(shaderAngleLocation, l_angle);
 	glUniform1f(shaderAttenuation0Location, attenuation0);
 	glUniform1f(shaderAttenuation1Location, attenuation1);
 	glUniform1f(shaderAttenuation2Location, attenuation2);
@@ -317,7 +321,7 @@ void initRendering()
 {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
     glutInitWindowSize(800, 800);
-    glutCreateWindow("Ostroslupy i siatka");
+    glutCreateWindow("Dwudziestobok");
 
     glutReshapeFunc(ChangeSize);
     glutDisplayFunc(RenderScene);
