@@ -1,4 +1,4 @@
-ï»¿// Our first OpenGL program that will just draw a triangle on the screen.
+// Our first OpenGL program that will just draw a triangle on the screen.
 #include <Windows.h>
 #include <GLTools.h>
 #include <GL/glew.h> // OpenGL toolkit
@@ -13,9 +13,10 @@
 #include <GLGeometryTransform.h>
 #include <vector>
 
-
 #define _USE_MATH_DEFINES
 #include <math.h>
+
+using namespace std;
 
 GLuint shader;
 GLuint MVMatrixLocation;
@@ -68,16 +69,14 @@ void KeyboardKeys(unsigned char key, int xmouse, int ymouse)//unsigned char key,
 	{
         case 'q':
 			exit(0);
-        case 'w':			//obrÃ³Ä‡ do gÃ³ry
+        case 'w':			//obróæ do góry
              kz++; break;
-        case 's':			//obrÃ³Ä‡ w dÃ³Å‚
+        case 's':			//obróæ w dó³
              kz--; break;
         default: 
 			break; 
 	}
 }
-
-
 
 int n_vertices=0;
 std::vector<float> vertices;
@@ -108,7 +107,7 @@ void wczytajWspolrzedneInormalneWierzcholkaDoTablicy()
    }
    fprintf(stderr,"nv = %u %u\n",n_vertices,vertices.size());
 }
-//jako globalne poniewaz nizej tez sie nam to przyda
+
 int n_faces=0;
 std::vector<GLuint> faces;
 void wczytajIndeksyPunktowTworzacychScianki()
@@ -138,18 +137,63 @@ void wczytajIndeksyPunktowTworzacychScianki()
    fprintf(stderr,"nf = %u\n",n_faces);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Window has changed size, or has just been created. In either case, we need
-// to use the window dimensions to set the viewport and the projection matrix.
-
 void ChangeSize(int w, int h)
 {
-	float fov = 50.0f;
+	float fov = 70.0f;
     glViewport(0, 0, w, h);
 	viewFrustum.SetPerspective(fov,(float)(w/h),1.0f,50.0f);	//fov, ratio, blisko, daleko
 }
 
+void SetupRC()
+{
+    glClearColor(0.097f, 0.184f, 0.199f, 1.0f);// szaro/niebieskie t³o assassin
+	
+	glEnable(GL_DEPTH_TEST);
+	
+	shader = gltLoadShaderPairWithAttributes("shader.vp", "shader.fp", 2, GLT_ATTRIBUTE_VERTEX, "vVertex", GLT_ATTRIBUTE_NORMAL, "vNormal");
+    fprintf(stdout, "GLT_ATTRIBUTE_VERTEX : %d\nGLT_ATTRIBUTE_NORMAL : %d \n", GLT_ATTRIBUTE_VERTEX, GLT_ATTRIBUTE_NORMAL);
 
+	MVPMatrixLocation = glGetUniformLocation(shader,"MVPMatrix");
+	normalMatrixLocation = glGetUniformLocation(shader,"normalMatrix");
+	MVMatrixLocation = glGetUniformLocation(shader,"MVMatrix");
+	shaderPositionLocation = glGetUniformLocation(shader, "light1.position");
+	shaderColorLocation = glGetUniformLocation(shader, "light1.color");
+	shaderAngleLocation = glGetUniformLocation(shader, "light1.angle");
+	shaderAttenuation0Location = glGetUniformLocation(shader, "light1.attenuation0");
+	shaderAttenuation1Location = glGetUniformLocation(shader, "light1.attenuation1");
+	shaderAttenuation2Location = glGetUniformLocation(shader, "light1.attenuation2");
+	shaderAmbientColorLocation = glGetUniformLocation(shader, "material.ambientColor");
+	shaderDiffuseColorLocation = glGetUniformLocation(shader, "material.diffuseColor");
+	shaderSpecularColorLocation = glGetUniformLocation(shader, "material.specularColor");
+	shaderSpecularExponentLocation = glGetUniformLocation(shader, "material.specularExponent");
+
+	wczytajWspolrzedneInormalneWierzcholkaDoTablicy();
+	wczytajIndeksyPunktowTworzacychScianki();
+
+		
+	GLuint vertex_buffer;
+	glGenBuffers(1,&vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER,n_vertices*sizeof(float)*7,&vertices[0],GL_STATIC_DRAW);
+	if(glGetError()!=GL_NO_ERROR)
+		fprintf(stderr,"error copying vertices\n");
+	
+	glVertexAttribPointer(GLT_ATTRIBUTE_VERTEX,4,GL_FLOAT,GL_FALSE,sizeof(float)*7,(const GLvoid *)0);
+	glVertexAttribPointer(GLT_ATTRIBUTE_NORMAL,3,GL_FLOAT,GL_FALSE,sizeof(float)*7,(const GLvoid *)(4*sizeof(float)) );
+	glEnableVertexAttribArray(GLT_ATTRIBUTE_VERTEX);
+	glEnableVertexAttribArray(GLT_ATTRIBUTE_NORMAL);
+	
+	GLuint faces_buffer;
+	glGenBuffers(1,&faces_buffer);
+	if(glGetError()!=GL_NO_ERROR)
+		fprintf(stderr,"faces_buffer invalid\n");
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,faces_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,n_faces*sizeof(GLuint)*3,&faces[0],GL_STATIC_DRAW);
+	if(glGetError()!=GL_NO_ERROR)
+		fprintf(stderr,"error copying faces\n");
+
+}
 
 //----------------------------------------------------
 void TriangleFace(M3DVector3f a, M3DVector3f b, M3DVector3f c) {
@@ -203,48 +247,36 @@ void drawGrid() {
     glEnd();
 }
 
-
-
-///////////////////////////////////////////////////////////////////////////////
-// This function does any needed initialization on the rendering context.
-// This is the first opportunity to do any OpenGL related tasks.
-
-void SetupRC()
-{
-    glClearColor(0.097f, 0.184f, 0.199f, 1.0f);// szaro/niebieskie tÅ‚o assassin
-	
-    glEnable(GL_DEPTH_TEST);
-
-	shader = gltLoadShaderPairWithAttributes("shader.vp", "shader.fp", 2, GLT_ATTRIBUTE_VERTEX, "vVertex", GLT_ATTRIBUTE_NORMAL, "vNormal");
-    fprintf(stdout, "GLT_ATTRIBUTE_VERTEX : %d\nGLT_ATTRIBUTE_NORMAL : %d \n", GLT_ATTRIBUTE_VERTEX, GLT_ATTRIBUTE_NORMAL);
-
-	MVPMatrixLocation = glGetUniformLocation(shader,"MVPMatrix");
-	normalMatrixLocation = glGetUniformLocation(shader,"normalMatrix");
-	MVMatrixLocation = glGetUniformLocation(shader,"MVMatrix");
-	shaderPositionLocation = glGetUniformLocation(shader, "light1.position");
-	shaderColorLocation = glGetUniformLocation(shader, "light1.color");
-	shaderAngleLocation = glGetUniformLocation(shader, "light1.angle");
-	shaderAttenuation0Location = glGetUniformLocation(shader, "light1.attenuation0");
-	shaderAttenuation1Location = glGetUniformLocation(shader, "light1.attenuation1");
-	shaderAttenuation2Location = glGetUniformLocation(shader, "light1.attenuation2");
-	shaderAmbientColorLocation = glGetUniformLocation(shader, "material.ambientColor");
-	shaderDiffuseColorLocation = glGetUniformLocation(shader, "material.diffuseColor");
-	shaderSpecularColorLocation = glGetUniformLocation(shader, "material.specularColor");
-	shaderSpecularExponentLocation = glGetUniformLocation(shader, "material.specularExponent");
-
-	wczytajWspolrzedneInormalneWierzcholkaDoTablicy();
-	wczytajIndeksyPunktowTworzacychScianki();
-
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Called to draw scene
-
 	GLMatrixStack matrixStack;
 	
 	GLMatrixStack modelView;
 	GLMatrixStack projection;
 	GLGeometryTransform geometryPipeline;
+
+void uniformLightLoad()
+{
+	glUniformMatrix4fv(MVMatrixLocation, 1, GL_FALSE, geometryPipeline.GetModelViewProjectionMatrix());
+	glUniformMatrix4fv(MVPMatrixLocation, 1, GL_FALSE, geometryPipeline.GetModelViewMatrix());
+	glUniformMatrix3fv(normalMatrixLocation, 1, GL_FALSE, geometryPipeline.GetNormalMatrix());
+}
+
+void loadUniform(M3DVector3f ambientLight, M3DVector3f color, M3DVector3f position, M3DVector3f ambientColor, M3DVector3f diffuseColor,	float lightAngle, float attenuation0, float attenuation1, float attenuation2,	M3DVector3f specularColor, float specularExponent)
+{
+	glUniformMatrix4fv(MVMatrixLocation, 1, GL_FALSE, geometryPipeline.GetModelViewMatrix());
+	glUniformMatrix4fv(MVPMatrixLocation, 1, GL_FALSE, geometryPipeline.GetModelViewProjectionMatrix());
+	glUniformMatrix3fv(normalMatrixLocation, 1, GL_FALSE, geometryPipeline.GetNormalMatrix());
+	glUniform3fv(ambientLightLocation, 1, ambientLight);
+	glUniform3fv(shaderPositionLocation, 1, position);
+	glUniform3fv(shaderColorLocation, 1, color);
+	glUniform1f(shaderAngleLocation, lightAngle);
+	glUniform1f(shaderAttenuation0Location, attenuation0);
+	glUniform1f(shaderAttenuation1Location, attenuation1);
+	glUniform1f(shaderAttenuation2Location, attenuation2);
+	glUniform3fv(shaderAmbientColorLocation, 1, ambientColor);
+	glUniform3fv(shaderDiffuseColorLocation, 1, diffuseColor);
+	glUniform3fv(shaderSpecularColorLocation, 1, specularColor);
+	glUniform1f(shaderSpecularExponentLocation, specularExponent);
+}
 
 void RenderScene(void) {
     // Clear the window with current clearing color
@@ -260,24 +292,7 @@ void RenderScene(void) {
 	eye[0]=6.0f*cos(angle);
 	eye[1]=6.0f*sin(angle);
 	eye[2]=kz; 
-
-	LookAt(cameraFrame,eye,at,up);
-	
-	geometryPipeline.SetMatrixStacks(modelView,projection);
-
-	//swiatlo
-	M3DVector3f ambientLight = {1.0f, 1.0f, 1.0f};
-	M3DVector3f position = {2.0f, 2.0f, 5.0f};
-	M3DVector3f color = {1.0f, 1.0f, 1.0f};
-	float l_angle = 90.0f;
-	float attenuation0 = 0.5f;
-	float attenuation1 = 0.02f;
-	float attenuation2 = 0.05f;
-	M3DVector3f ambientColor = {0.1f, 0.1, 0.1};
-	M3DVector3f diffuseColor = {0.184f, 0.598f, 0.75f};
-	M3DVector3f specularColor = {1.0f, 1.0f, 1.0f};
-	float specularExponent = 9;
-	
+		
 	float ico_vertices[3 * 12] = {
 		  0., 0., -0.9510565162951536,
 		  0., 0., 0.9510565162951536,
@@ -316,29 +331,23 @@ void RenderScene(void) {
 		  8 ,			 6 ,			 2 
 	};
 	
-	GLuint vertex_buffer;
-	glGenBuffers(1,&vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER,n_vertices*sizeof(float)*7,&vertices[0],GL_STATIC_DRAW);
-	if(glGetError()!=GL_NO_ERROR)
-		fprintf(stderr,"error copying vertices\n");
+	LookAt(cameraFrame,eye,at,up);
 	
-	glVertexAttribPointer(GLT_ATTRIBUTE_VERTEX,4,GL_FLOAT,GL_FALSE,sizeof(float)*7,(const GLvoid *)0);
-	glVertexAttribPointer(GLT_ATTRIBUTE_NORMAL,3,GL_FLOAT,GL_FALSE,sizeof(float)*7,(const GLvoid *)(4*sizeof(float)) );
-	glEnableVertexAttribArray(GLT_ATTRIBUTE_VERTEX);
-	glEnableVertexAttribArray(GLT_ATTRIBUTE_NORMAL);
-	
-	GLuint faces_buffer;
-	glGenBuffers(1,&faces_buffer);
-	if(glGetError()!=GL_NO_ERROR)
-		fprintf(stderr,"faces_buffer invalid\n");
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,faces_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,n_faces*sizeof(GLuint)*3,&faces[0],GL_STATIC_DRAW);
-	if(glGetError()!=GL_NO_ERROR)
-		fprintf(stderr,"error copying faces\n");
+	geometryPipeline.SetMatrixStacks(modelView,projection);
 
-
+	//swiatlo
+	M3DVector3f ambientLight = {1.0f, 1.0f, 1.0f};
+	M3DVector3f position = {2.0f, 2.0f, 5.0f};
+	M3DVector3f color = {1.0f, 1.0f, 1.0f};
+	float lightAngle = 90.0f;
+	float attenuation0 = 0.5f;
+	float attenuation1 = 0.02f;
+	float attenuation2 = 0.05f;
+	M3DVector3f ambientColor = {0.1f, 0.1, 0.1};
+	M3DVector3f diffuseColor = {0.184f, 0.598f, 0.75f};
+	M3DVector3f specularColor = {1.0f, 1.0f, 1.0f};
+	float specularExponent = 4;
+	
 	geometryPipeline.SetMatrixStacks(modelView,projection);
 
 	projection.LoadMatrix(viewFrustum.GetProjectionMatrix());
@@ -348,72 +357,44 @@ void RenderScene(void) {
 	modelView.LoadMatrix(mCamera);
 	modelView.PushMatrix();
 
-	glUniformMatrix4fv(MVMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewProjectionMatrix());
-	glUniformMatrix4fv(MVPMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewMatrix());
-	glUniformMatrix3fv(normalMatrixLocation,1,GL_FALSE,geometryPipeline.GetNormalMatrix());
-	glUniform3fv(shaderPositionLocation, 1, position);
-	glUniform3fv(shaderColorLocation, 1, color);
-	glUniform1f(shaderAngleLocation, l_angle);
-	glUniform1f(shaderAttenuation0Location, attenuation0);
-	glUniform1f(shaderAttenuation1Location, attenuation1);
-	glUniform1f(shaderAttenuation2Location, attenuation2);
-	glUniform3fv(shaderAmbientColorLocation, 1, ambientColor);
-	glUniform3fv(shaderDiffuseColorLocation, 1, diffuseColor);
-	glUniform3fv(shaderSpecularColorLocation, 1, specularColor);
-	glUniform1f(shaderSpecularExponentLocation, specularExponent);
+	uniformLightLoad();
+	loadUniform(ambientLight, color, position, ambientColor, diffuseColor, lightAngle, attenuation0, attenuation1, attenuation2, specularColor, specularExponent);
+
 	glPolygonOffset(1.0f, 1.0f);
 	drawGrid(); 
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	drawGrid(); 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	modelView.Translate(-2.0f,-2.0f,2.0f);
-	glUniformMatrix4fv(MVMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewProjectionMatrix());
-	glUniformMatrix4fv(MVPMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewMatrix());
-	glUniformMatrix3fv(normalMatrixLocation,1,GL_FALSE,geometryPipeline.GetNormalMatrix());
+
+	uniformLightLoad();
+	loadUniform(ambientLight, color, position, ambientColor, diffuseColor, lightAngle, attenuation0, attenuation1, attenuation2, specularColor, specularExponent);
+	glUniform3fv(ambientLightLocation, 1, ambientLight);
 	glUniform3fv(shaderPositionLocation, 1, position);
 	glUniform3fv(shaderColorLocation, 1, color);
-	glUniform1f(shaderAngleLocation, l_angle);
+	glUniform1f(shaderAngleLocation, lightAngle);
 	glUniform1f(shaderAttenuation0Location, attenuation0);
 	glUniform1f(shaderAttenuation1Location, attenuation1);
 	glUniform1f(shaderAttenuation2Location, attenuation2);
 	glUniform3fv(shaderAmbientColorLocation, 1, ambientColor);
 	glUniform3fv(shaderDiffuseColorLocation, 1, diffuseColor);
-	glUniform3fv(shaderSpecularColorLocation, 1, specularColor);
-	glUniform1f(shaderSpecularExponentLocation, specularExponent);
+
 	drawTriangles(20, ico_vertices, ico_faces);
 	modelView.PopMatrix();
 	modelView.PushMatrix();
 	modelView.Translate(2.0,2.0,2.0);
-	glUniformMatrix4fv(MVMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewProjectionMatrix());
-	glUniformMatrix4fv(MVPMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewMatrix());
-	glUniformMatrix3fv(normalMatrixLocation,1,GL_FALSE,geometryPipeline.GetNormalMatrix());
-	glUniform3fv(shaderPositionLocation, 1, position);
-	glUniform3fv(shaderColorLocation, 1, color);
-	glUniform1f(shaderAngleLocation, l_angle);
-	glUniform1f(shaderAttenuation0Location, attenuation0);
-	glUniform1f(shaderAttenuation1Location, attenuation1);
-	glUniform1f(shaderAttenuation2Location, attenuation2);
-	glUniform3fv(shaderAmbientColorLocation, 1, ambientColor);
-	glUniform3fv(shaderDiffuseColorLocation, 1, diffuseColor);
-	glUniform3fv(shaderSpecularColorLocation, 1, specularColor);
-	glUniform1f(shaderSpecularExponentLocation, specularExponent);
+
+	uniformLightLoad();
+	loadUniform(ambientLight, color, position, ambientColor, diffuseColor, lightAngle, attenuation0, attenuation1, attenuation2, specularColor, specularExponent);
+    
 	drawSmoothTriangles(20, ico_vertices, ico_faces);
 	modelView.PopMatrix();
 	modelView.PushMatrix();
-	modelView.Translate(6.0,6.0,2.0);
-	glUniformMatrix4fv(MVMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewProjectionMatrix());
-	glUniformMatrix4fv(MVPMatrixLocation,1,GL_FALSE,geometryPipeline.GetModelViewMatrix());
-	glUniformMatrix3fv(normalMatrixLocation,1,GL_FALSE,geometryPipeline.GetNormalMatrix());
-	glUniform3fv(shaderPositionLocation, 1, position);
-	glUniform3fv(shaderColorLocation, 1, color);
-	glUniform1f(shaderAngleLocation, l_angle);
-	glUniform1f(shaderAttenuation0Location, attenuation0);
-	glUniform1f(shaderAttenuation1Location, attenuation1);
-	glUniform1f(shaderAttenuation2Location, attenuation2);
-	glUniform3fv(shaderAmbientColorLocation, 1, ambientColor);
-	glUniform3fv(shaderDiffuseColorLocation, 1, diffuseColor);
-	glUniform3fv(shaderSpecularColorLocation, 1, specularColor);
-	glUniform1f(shaderSpecularExponentLocation, specularExponent);
+	modelView.Translate(0.0,0.0,2.0);
+
+	uniformLightLoad();
+	loadUniform(ambientLight, color, position, ambientColor, diffuseColor, lightAngle, attenuation0, attenuation1, attenuation2, specularColor, specularExponent);
+
 	glDrawElements(GL_TRIANGLES,3*n_faces,GL_UNSIGNED_INT,0);
 	modelView.PopMatrix();
 	modelView.PopMatrix();

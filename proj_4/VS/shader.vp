@@ -6,15 +6,15 @@ in vec3 vNormal;
 out vec4 vVaryingColor;
 
 //nowe
-uniform  mat4x4 MVPMatrix;
-uniform  mat3x3 normalMatrix;
-uniform  mat4x4 MVMatrix;
+uniform mat4x4 MVPMatrix;
+uniform mat3x3 normalMatrix;
+uniform mat4x4 MVMatrix;
 
 uniform vec3 ambientLight;
 
 struct pointLight {
-    vec3  position; //w przestsrzeni eye
-    vec3  color;
+    vec3 position; //w przestsrzeni eye
+    vec3 color;
     float attenuation0;
     float attenuation1;
     float attenuation2;
@@ -23,15 +23,15 @@ struct pointLight {
 uniform pointLight light1;
 
 struct materialProperties {
-    vec3  ambientColor;
-    vec3  diffuseColor;
-    vec3  specularColor;
+    vec3 ambientColor;
+    vec3 diffuseColor;
+    vec3 specularColor;
     float specularExponent;
 };
 uniform materialProperties material;
 
 
-void main() 
+void main()
 {
 	vec4 positionInEyeSpace4;
 	vec3 positionInEyeSpace3;
@@ -42,10 +42,10 @@ void main()
 	normalInEyeSpace = normalMatrix*vNormal;
 
 	gl_Position = MVMatrix*vVertex;
-	
+
 	vec3 kierunekSwiatla=normalize(light1.position-positionInEyeSpace3);
 	float f=max(0.0, dot(normalInEyeSpace,kierunekSwiatla));
-	
+
 	vVaryingColor.rgb=material.ambientColor;
 	vVaryingColor.a=1.0;
 	vVaryingColor.rgb+=f*material.diffuseColor*light1.color;

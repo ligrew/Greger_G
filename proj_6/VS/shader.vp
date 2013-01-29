@@ -1,0 +1,21 @@
+#version 330
+
+in vec4 vVertex;
+in vec3 vNormal; 
+in vec2 texCoord0;
+
+uniform  mat4x4 MVPMatrix;
+uniform  mat3x3 normalMatrix;
+uniform  mat4x4 MVMatrix;
+
+smooth out vec3  positionInEyeSpace3;
+smooth out vec3  normalInEyeSpace;
+smooth out vec2  varyingTexCoord;
+
+void main() {
+	vec4 positionInEyeSpace4=MVMatrix*vVertex;
+	positionInEyeSpace3=positionInEyeSpace4.xyz/positionInEyeSpace4.w;
+	normalInEyeSpace=normalize(normalMatrix*vNormal);
+	varyingTexCoord=texCoord0;
+	gl_Position = MVPMatrix*vVertex;
+}
